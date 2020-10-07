@@ -50,12 +50,21 @@ def compute_smoothed_traj(path, V_des, alpha, dt):
     ########## Code starts here ##########
     x = np.array([point[0] for point in path])
     y = np.array([point[1] for point in path])
-    traj_coefficients= scipy.interpolate.splrep(x, y, s = alpha)
-    t_old = np.cumsum([V_des/np.linalg.norm(x) for x in path])
-    print(t_old)
+    #t_old is not right it should be the  current and next point
+    t_old = scipy.integrate.cumtrapz([0] + [V_des/np.linalg.norm([[x[i], y[i]], [x[i+1], y[i+1]]]) for i in range(0, len(x)-1)], initial = 0)
     t_smoothed = np.arange(0.0, t_old[-1], dt)
     print(t_smoothed)
-    traj_smoothed = scipy.interpolate.splev(t_smoothed, traj_coefficients)
+    traj_coefficients_x= scipy.interpolate.splrep(t_old, x, s = alpha)
+    traj_coefficients_y = scipy.interpolate.splrep(t_old, y, s = alpha)
+    x_new= scipy.interpolate.splev(t_smoothed, traj_coefficients_x)
+    y_new = scipy.interpolate.splev(t_smoothed, traj_coefficients_y)
+    xd_new= scipy.interpolate.splev(t_smoothed, traj_coefficients_x, der = 1)
+    yd_new = scipy.interpolate.splev(t_smoothed, traj_coefficients_y, der = 1)
+    xdd_new= scipy.interpolate.splev(t_smoothed, traj_coefficients_x, der = 2)
+    ydd_new = scipy.interpolate.splev(t_smoothed, traj_coefficients_y, der = 2)
+    theta = np.arctan2(yd_new, xd_new)
+    traj_smoothed = np.array([x_new, y_new, theta, xd_new, yd_new, xdd_new, ydd_new ]).transpose()
+    print np.shape(traj_smoothed)
     ########## Code ends here ##########
 
     return traj_smoothed, t_smoothed
