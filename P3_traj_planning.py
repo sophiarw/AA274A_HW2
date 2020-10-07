@@ -91,28 +91,36 @@ def modify_traj_with_limits(traj, t, V_max, om_max, dt):
     Hint: This should almost entirely consist of calling functions from Problem Set 1
     """
     ########## Code starts here ##########
-    traj_new = []
-    tau_new = []
-    V_new= []
-    om_new = []
-    for i in range(np.shape(traj)[0]-1):
-        s_0 = State(x=traj[i, 0], y=traj[i, 1], V=V_max, th=traj[i, 2])
-        s_f = State(x=traj[i+1, 0], y=traj[i+1, 1], V=V_max, th=traj[i+1, 2])
-        tf = t[i+1] - t[i]
-        N = int(tf/dt) + 1
-        traj_curr, tau_curr, V_tilde_curr, om_tilde_curr = compute_traj_with_limits(s_0, s_f, tf, N, V_max, om_max)
-        if i == 0:
-            traj_new = traj_curr
-            V_new = V_tilde_curr
-            om_new = om_tilde_curr
-            tau_new = tau_curr
-        else:
-            np.append(traj_new, traj_curr)
-            np.append(V_new, V_tilde_curr)
-            np.append(om_new, om_tilde_curr)
-            np.append(tau_new, tau_curr)
+    # traj_new = []
+    # tau_new = []
+    # V_new= []
+    # om_new = []
+    # for i in range(np.shape(traj)[0]-1):
+    #     s_0 = State(x=traj[i, 0], y=traj[i, 1], V=V_max, th=traj[i, 2])
+    #     s_f = State(x=traj[i+1, 0], y=traj[i+1, 1], V=V_max, th=traj[i+1, 2])
+    #     tf = t[i+1] - t[i]
+    #     N = int(tf/dt) + 1
+    #     traj_curr, tau_curr, V_tilde_curr, om_tilde_curr = compute_traj_with_limits(s_0, s_f, tf, N, V_max, om_max)
+    #     if i == 0:
+    #         traj_new = traj_curr
+    #         V_new = V_tilde_curr
+    #         om_new = om_tilde_curr
+    #         tau_new = tau_curr
+    #     else:
+    #         np.append(traj_new, traj_curr)
+    #         np.append(V_new, V_tilde_curr)
+    #         np.append(om_new, om_tilde_curr)
+    #         np.append(tau_new, tau_curr)
+    #
+    # t_new, V_scaled, om_scaled, traj_scaled = interpolate_traj(traj_new, tau_new, V_new, om_new, dt, s_f)
 
-    t_new, V_scaled, om_scaled, traj_scaled = interpolate_traj(traj_new, tau_new, V_new, om_new, dt, s_f)
+
+    s_0 = State(x=traj[0, 0], y=traj[0, 1], V=V_max, th=traj[0, 2])
+    s_f = State(x=traj[-1, 0], y=traj[-1, 1], V=V_max, th=traj[-1, 2])
+    tf = t[i-1] - t[0]
+    N = int(tf/dt) + 1
+    traj, tau, V_tilde, om_tilde = compute_traj_with_limits(s_0, s_f, tf, N, V_max, om_max)
+    t_new, V_scaled, om_scaled, traj_scaled = interpolate_traj(traj, tau, V_tilde, om_tilde, dt, s_f)
     ########## Code ends here ##########
 
     return t_new, V_scaled, om_scaled, traj_scaled
