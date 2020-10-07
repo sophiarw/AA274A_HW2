@@ -51,7 +51,7 @@ def compute_smoothed_traj(path, V_des, alpha, dt):
     x = np.array([point[0] for point in path])
     y = np.array([point[1] for point in path])
     #t_old is not right it should be the  current and next point
-    t_old = scipy.integrate.cumtrapz([0] + [V_des/np.linalg.norm([[x[i], y[i]], [x[i+1], y[i+1]]]) for i in range(0, len(x)-1)], initial = 0)
+    t_old = scipy.integrate.cumtrapz([0] + [V_des/np.sqrt((x[i] - [x[i+1])**2 + (y[i]] - y[i+1])**2]]) for i in range(0, len(x)-1)], initial = 0)
     t_smoothed = np.arange(0.0, t_old[-1], dt)
     print(t_smoothed)
     traj_coefficients_x= scipy.interpolate.splrep(t_old, x, s = alpha)
