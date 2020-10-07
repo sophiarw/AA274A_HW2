@@ -27,7 +27,10 @@ class SwitchingController(object):
             V, om: Control actions
         """
         ########## Code starts here ##########
-
+        if t < self.t_before_switch:
+            return self.traj_controller.compute_control(x, y, th, t)
+        else:
+            return self.pose_controller.compute_control(x, y, th, t)
         ########## Code ends here ##########
 
 def compute_smoothed_traj(path, V_des, alpha, dt):
@@ -51,9 +54,11 @@ def compute_smoothed_traj(path, V_des, alpha, dt):
     x = np.array([point[0] for point in path])
     y = np.array([point[1] for point in path])
     #t_old is not right it should be the  current and next point
-    t_old = scipy.integrate.cumtrapz([0] + [V_des/np.sqrt((x[i] - [x[i+1])**2 + (y[i]] - y[i+1])**2]]) for i in range(0, len(x)-1)], initial = 0)
+    t_old = scipy.integrate.cumtrapz([0] + [V_des/np.sqrt((x[i] - x[i+1])**2 + (y[i] - y[i+1])**2) for i in range(0, len(x)-1)], initial = 0)
+    print(len(t_old))
+
     t_smoothed = np.arange(0.0, t_old[-1], dt)
-    print(t_smoothed)
+    print(len(t_smoothed))
     traj_coefficients_x= scipy.interpolate.splrep(t_old, x, s = alpha)
     traj_coefficients_y = scipy.interpolate.splrep(t_old, y, s = alpha)
     x_new= scipy.interpolate.splev(t_smoothed, traj_coefficients_x)
@@ -64,7 +69,6 @@ def compute_smoothed_traj(path, V_des, alpha, dt):
     ydd_new = scipy.interpolate.splev(t_smoothed, traj_coefficients_y, der = 2)
     theta = np.arctan2(yd_new, xd_new)
     traj_smoothed = np.array([x_new, y_new, theta, xd_new, yd_new, xdd_new, ydd_new ]).transpose()
-    print np.shape(traj_smoothed)
     ########## Code ends here ##########
 
     return traj_smoothed, t_smoothed
@@ -87,7 +91,28 @@ def modify_traj_with_limits(traj, t, V_max, om_max, dt):
     Hint: This should almost entirely consist of calling functions from Problem Set 1
     """
     ########## Code starts here ##########
+    traj_new = []
+    tau_new = []
+    V_new= []
+    om_new = []
+    for i in range(np.shape(traj)[0]-1):
+        s_0 = State(x=traj[i, 0], y=traj[i, 1], V=V_max, th=traj[i, 2])
+        s_f = State(x=traj[i+1, 0], y=traj[i+1, 1], V=V_max, th=traj[i+1, 2])
+        tf = t[i+1] - t[i]
+        N = int(tf/dt) + 1
+        traj_curr, tau_curr, V_tilde_curr, om_tilde_curr = compute_traj_with_limits(s_0, s_f, tf, N, V_max, om_max)
+        if i == 0:
+            traj_new = traj_curr
+            V_new = V_tilde_curr
+            om_new = om_tilde_curr
+            tau_new = tau_curr
+        else:
+            np.append(traj_new, traj_curr)
+            np.append(V_new, V_tilde_curr)
+            np.append(om_new, om_tilde_curr)
+            np.append(tau_new, tau_curr)
 
+    t_new, V_scaled, om_scaled, traj_scaled = interpolate_traj(traj_new, tau_new, V_new, om_new, dt, s_f)
     ########## Code ends here ##########
 
     return t_new, V_scaled, om_scaled, traj_scaled
