@@ -135,10 +135,8 @@ class RRTConnect(object):
         V_fw[0,:] = self.x_init    # RRT is rooted at self.x_init
         V_bw[0,:] = self.x_goal
         k = 0
-        path_forwards = True
         while k < max_iters-1 and success == False:
             k += 1
-            print(k)
 
             #sample forward
             x_rand = np.array([np.random.uniform(self.statespace_lo[i], self.statespace_hi[i]) for i in range(state_dim)])
@@ -153,21 +151,19 @@ class RRTConnect(object):
                 #connect new point to backwards path
                 nearest_index_bw = self.find_nearest_backward(V_bw[:n_bw, :], x_new)
                 x_connect = V_bw[nearest_index_bw, :]
-                incremented = False
                 while True and success == False:
                     x_newconnect = self.steer_towards_backward(x_new, x_connect, eps)
-                    if self.is_free_motion(self.obstacles, x_newconnect, x_connect):
-                        incremented  = True
+                    if self.is_free_motion(self.obstacles, x_connect, x_newconnect):
                         V_bw[n_bw, :] = x_newconnect
                         P_bw[n_bw] = nearest_index_bw
+                        n_bw += 1
                         if np.array_equal(x_newconnect, x_new):
                             success = True
                             break
                         x_connect = np.copy(x_newconnect)
                     else:
                         break
-                if incremented == True:
-                    n_bw += 1
+
 
             if success:
                 break
@@ -175,8 +171,8 @@ class RRTConnect(object):
             x_rand = np.array([np.random.uniform(self.statespace_lo[i], self.statespace_hi[i]) for i in range(state_dim)])
             nearest_index_bw = self.find_nearest_backward(V_bw[:n_bw, :], x_rand)
             x_near = V_bw[nearest_index_bw, :]
-            x_new = self.steer_towards_backward(x_near, x_rand, eps)
-            if self.is_free_motion(self.obstacles, x_near, x_new):
+            x_new = self.steer_towards_backward(x_rand, x_near, eps)
+            if self.is_free_motion(self.obstacles, x_new, x_rand):
                 V_bw[n_bw, :] = x_newconnect
                 P_bw[n_bw] = nearest_index_bw
                 n_bw += 1
@@ -184,49 +180,45 @@ class RRTConnect(object):
                 #connect new point to forwards path
                 nearest_index_fw = self.find_nearest_forward(V_fw[:n_fw, :], x_new)
                 x_connect = V_fw[nearest_index_fw, :]
-                incremented = False
                 while True and success == False:
                     x_newconnect = self.steer_towards_forward(x_connect, x_new, eps)
                     if self.is_free_motion(self.obstacles, x_newconnect, x_connect):
                         V_fw[n_fw, :] = x_newconnect
                         P_fw[n_fw] = nearest_index_fw
-                        incremented = True
+                        n_fw += 1
                         if np.array_equal(x_newconnect, x_new):
-                            print(x_newconnect)
-                            print(x_new)
                             success = True
-                            path_forwards = False
                             break
                         x_connect = np.copy(x_newconnect)
                     else:
                         break
 
-                if incremented == True:
-                    n_fw += 1
+
 
             if success:
                 break
 
 
+        print(success)
         #if success, reconstruct the path
         if success == True:
-            if path_forwards:
-                self.path = [self.x_goal]
-                P = P_fw
-                n = n_fw
-                V = V_fw
-            else:
-                self.path = [self.x_init]
-                P = P_bw
-                n = n_bw
-                V = V_bw
-            parent_index = P[n-1]
-            while P[parent_index]!=-1:
-                self.path.append(V[parent_index, :])
-                parent_index = P[parent_index]
-            if self.path != None:
-                self.path.append(self.x_init)
-                self.path = list(self.path)
+            self.path = []
+            parent_index = P_fw[n_fw-1]
+            while P_fw[parent_index]!=0:
+                self.path.append(V_fw[parent_index, :])
+                parent_index = P_fw[parent_index]
+
+            # reverse the list
+            self.path.append(V_fw[0])
+            self.path.reverse()
+
+            parent_index = P_bw[n_bw-1]
+            while P_bw[parent_index]!=0:
+                self.path.append(V_bw[parent_index, :])
+                parent_index = P_bw[parent_index]
+
+            self.path.append(V_bw[0])
+
 
 
         ########## Code ends here ##########
