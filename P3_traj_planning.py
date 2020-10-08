@@ -27,7 +27,7 @@ class SwitchingController(object):
             V, om: Control actions
         """
         ########## Code starts here ##########
-        if t < self.t_before_switch:
+        if t > self.t_before_switch:
             return self.traj_controller.compute_control(x, y, th, t)
         else:
             return self.pose_controller.compute_control(x, y, th, t)
@@ -114,12 +114,14 @@ def modify_traj_with_limits(traj, t, V_max, om_max, dt):
     #
     # t_new, V_scaled, om_scaled, traj_scaled = interpolate_traj(traj_new, tau_new, V_new, om_new, dt, s_f)
 
-
-    s_0 = State(x=traj[0, 0], y=traj[0, 1], V=V_max, th=traj[0, 2])
+    V,om = compute_controls(traj=traj)
+    s = compute_arc_length(V, t)
     s_f = State(x=traj[-1, 0], y=traj[-1, 1], V=V_max, th=traj[-1, 2])
-    tf = t[i-1] - t[0]
-    N = int(tf/dt) + 1
-    traj, tau, V_tilde, om_tilde = compute_traj_with_limits(s_0, s_f, tf, N, V_max, om_max)
+
+    V_tilde = rescale_V(V, om, V_max, om_max)
+    tau = compute_tau(V_tilde, s)
+    om_tilde = rescale_om(V, om, V_tilde)
+
     t_new, V_scaled, om_scaled, traj_scaled = interpolate_traj(traj, tau, V_tilde, om_tilde, dt, s_f)
     ########## Code ends here ##########
 
