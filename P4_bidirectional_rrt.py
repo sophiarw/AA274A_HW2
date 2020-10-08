@@ -157,16 +157,14 @@ class RRTConnect(object):
                 while True and success == False:
                     x_newconnect = self.steer_towards_backward(x_new, x_connect, eps)
                     if self.is_free_motion(self.obstacles, x_newconnect, x_connect):
-                        print("I entered free motion")
                         incremented  = True
                         V_bw[n_bw, :] = x_newconnect
                         P_bw[n_bw] = nearest_index_bw
                         if np.array_equal(x_newconnect, x_new):
                             success = True
                             break
-                        x_connect = x_newconnect[:]
+                        x_connect = np.copy(x_newconnect)
                     else:
-                        print("I did not enter free motion")
                         break
                 if incremented == True:
                     n_bw += 1
@@ -188,11 +186,8 @@ class RRTConnect(object):
                 x_connect = V_fw[nearest_index_fw, :]
                 incremented = False
                 while True and success == False:
-                    x_newconnect = self.steer_towards_forward(x_new, x_connect, eps)
+                    x_newconnect = self.steer_towards_forward(x_connect, x_new, eps)
                     if self.is_free_motion(self.obstacles, x_newconnect, x_connect):
-                        print(x_connect)
-                        print(x_newconnect)
-                        print("I entered free motion 2")
                         V_fw[n_fw, :] = x_newconnect
                         P_fw[n_fw] = nearest_index_fw
                         incremented = True
@@ -202,9 +197,8 @@ class RRTConnect(object):
                             success = True
                             path_forwards = False
                             break
-                        x_connect = x_newconnect[:]
+                        x_connect = np.copy(x_newconnect)
                     else:
-                        print("I did not enter free motion 2")
                         break
 
                 if incremented == True:
