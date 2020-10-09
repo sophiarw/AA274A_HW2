@@ -137,7 +137,7 @@ class RRTConnect(object):
         k = 0
         while k < max_iters-1 and success == False:
             k += 1
-
+            print(k)
             #sample forward
             x_rand = np.array([np.random.uniform(self.statespace_lo[i], self.statespace_hi[i]) for i in range(state_dim)])
             nearest_index_fw = self.find_nearest_forward(V_fw[:n_fw, :], x_rand)
@@ -172,8 +172,8 @@ class RRTConnect(object):
             nearest_index_bw = self.find_nearest_backward(V_bw[:n_bw, :], x_rand)
             x_near = V_bw[nearest_index_bw, :]
             x_new = self.steer_towards_backward(x_rand, x_near, eps)
-            if self.is_free_motion(self.obstacles, x_new, x_rand):
-                V_bw[n_bw, :] = x_newconnect
+            if self.is_free_motion(self.obstacles, x_new, x_near):
+                V_bw[n_bw, :] = x_new
                 P_bw[n_bw] = nearest_index_bw
                 n_bw += 1
 
@@ -204,9 +204,14 @@ class RRTConnect(object):
         if success == True:
             self.path = []
             parent_index = P_fw[n_fw-1]
+            curr_index = n_fw
             while P_fw[parent_index]!=0:
                 self.path.append(V_fw[parent_index, :])
+                #print(self.is_free_motion(self.obstacles, V_fw[parent_index, :], V_fw[curr_index, :]))
+                curr_index = parent_index
                 parent_index = P_fw[parent_index]
+
+
 
             # reverse the list
             self.path.append(V_fw[0])
@@ -341,11 +346,11 @@ class DubinsRRTConnect(RRTConnect):
         ########## Code starts here ##########
         from dubins import path_sample
         from dubins import path_length
-        if eps < path_length(x2, x1, self.turning_radius):
-            new_point = path_sample(x2, x1, 1.001*self.turning_radius, eps)[0][1]
-            return np.array(new_point)
+        if eps < path_length(x1, x2, self.turning_radius):
+            new_point = path_sample(self.reverse_heading(x1), self.reverse_heading(x2), 1.001*self.turning_radius, eps)[0]
+            return np.array(self.reverse_heading(new_point[1]))
         else:
-            return x2
+            return x1
         ########## Code ends here ##########
 
     def is_free_motion(self, obstacles, x1, x2, resolution = np.pi/6):
