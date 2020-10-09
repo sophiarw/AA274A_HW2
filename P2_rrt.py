@@ -129,6 +129,7 @@ class RRT(object):
         if self.path != None:
             self.path.append(self.x_init)
             self.path = list(self.path)
+            self.path.reverse()
 
 
         ########## Code ends here ##########

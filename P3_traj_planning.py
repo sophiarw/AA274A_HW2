@@ -27,7 +27,7 @@ class SwitchingController(object):
             V, om: Control actions
         """
         ########## Code starts here ##########
-        if t > self.t_before_switch:
+        if t < self.t_before_switch:
             return self.traj_controller.compute_control(x, y, th, t)
         else:
             return self.pose_controller.compute_control(x, y, th, t)

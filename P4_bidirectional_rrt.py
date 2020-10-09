@@ -137,14 +137,12 @@ class RRTConnect(object):
         k = 0
         while k < max_iters-1 and success == False:
             k += 1
-            print(k)
             #sample forward
             x_rand = np.array([np.random.uniform(self.statespace_lo[i], self.statespace_hi[i]) for i in range(state_dim)])
             nearest_index_fw = self.find_nearest_forward(V_fw[:n_fw, :], x_rand)
             x_near = V_fw[nearest_index_fw, :]
             x_new = self.steer_towards_forward(x_near, x_rand, eps)
             if self.is_free_motion(self.obstacles, x_near, x_new):
-                print("stuck 1")
                 V_fw[n_fw, :] = x_new
                 P_fw[n_fw] = nearest_index_fw
                 n_fw += 1
@@ -155,7 +153,6 @@ class RRTConnect(object):
                 while True and success == False:
                     x_newconnect = self.steer_towards_backward(x_new, x_connect, eps)
                     if self.is_free_motion(self.obstacles, x_connect, x_newconnect):
-                        print("stuck 2")
                         V_bw[n_bw, :] = x_newconnect
                         P_bw[n_bw] = nearest_index_bw
                         n_bw += 1
@@ -175,7 +172,6 @@ class RRTConnect(object):
             x_near = V_bw[nearest_index_bw, :]
             x_new = self.steer_towards_backward(x_rand, x_near, eps)
             if self.is_free_motion(self.obstacles, x_new, x_near):
-                print("stuck 3")
                 V_bw[n_bw, :] = x_new
                 P_bw[n_bw] = nearest_index_bw
                 n_bw += 1
@@ -186,7 +182,6 @@ class RRTConnect(object):
                 while True and success == False:
                     x_newconnect = self.steer_towards_forward(x_connect, x_new, eps)
                     if self.is_free_motion(self.obstacles, x_newconnect, x_connect):
-                        print("stuck 4")
                         V_fw[n_fw, :] = x_newconnect
                         P_fw[n_fw] = nearest_index_fw
                         n_fw += 1
@@ -227,6 +222,7 @@ class RRTConnect(object):
                 parent_index = P_bw[parent_index]
 
             self.path.append(V_bw[0])
+
 
 
 
